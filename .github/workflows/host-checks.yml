@@ -1,0 +1,11 @@
+name: Host control checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: c++ -std=c++17 -Wall -Wextra -pedantic -I tests -include tests/Arduino.h tests/test_control.cpp -o /tmp/maze-control-test
+      - run: /tmp/maze-control-test
