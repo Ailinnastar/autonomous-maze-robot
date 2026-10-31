@@ -1,12 +1,15 @@
 # Autonomous Maze Navigation Robot
 
-Arduino C++ control software using three infrared sensor channels and two continuous-rotation servos. The recovered sketch demonstrates right-priority intersection handling, timed turns, corridor steering, dead-end turns, and a terminal-stop heuristic.
+Arduino C++ control software used by our university team to complete a maze with a physical robot. The robot combines **3 infrared sensing channels** and **2 continuous-rotation servos** with wall following, corridor steering, and repeated-route detection.
 
-## Source provenance
+## Project highlights
 
-This sketch was recovered from Ailinna's editor history for the original `PROJECT_CODE_UNREFINED.ino` project. It is a May 2026 development baseline, not a verified copy of the final submission. The source labels essential motion and sensing routines as a lab baseline; that educational attribution is retained. Do not infer sole authorship of all baseline routines.
-
-The CV describes additional cycle-recovery behaviour and a maze completion time. Those claims have not been reproduced with this recovered snapshot and are not asserted for this repository.
+- **Physical maze completion:** our team completed the maze using this sketch, as confirmed by Ailinna.
+- **32-action rolling history:** records turns and retains the most recent decisions.
+- **Repeated-route detection:** compares repeating turn patterns of lengths **2 to 8**, then switches the wall-following preference.
+- **Adaptive steering:** adjusts wheel pulses using two-wall, left-wall, right-wall, or open-space feedback.
+- **Junction handling:** combines right-priority exploration, recovery turns, and post-turn alignment.
+- **Terminal stop:** stops both motors at a blocked end after the configured long-corridor interval.
 
 ## Hardware configuration
 
@@ -17,24 +20,30 @@ The CV describes additional cycle-recovery behaviour and a maze completion time.
 | Left / centre / right indicators | A2 / A1 / A0 |
 | Left / right servo signal | 13 / 12 |
 
-Open `maze_robot/maze_robot.ino` in Arduino IDE with the Servo library. Select the actual board used by your hardware before compiling. The repository does not establish a verified board target or wiring specification beyond the pin constants in the recovered code.
+Open `maze_robot/maze_robot.ino` in Arduino IDE with the Servo library and select the board used by your robot.
 
-Servo neutral is configured at 1500 microseconds. IR thresholds, drive pulses, turn durations, and steering trim are hardware-dependent and require calibration. Test with the wheels clear of the ground before allowing movement.
+The sketch uses channel-specific IR frequency sweeps and calibrated servo pulses. Servo neutral is 1500 microseconds; turn durations, sensing thresholds, and drive pulses should be calibrated for your hardware. Start with the wheels clear of the ground.
 
-## Control flow
+## Navigation flow
 
-1. Read three infrared channels and update indicators.
-2. At a dead end, perform a timed turn or stop according to the corridor-time heuristic.
-3. Otherwise prioritise an open right branch, then a left turn if the front is blocked.
-4. Use right-sensor feedback to steer in a corridor.
+1. Sweep the three infrared channels and update the wall indicators.
+2. Use corridor duration to distinguish a terminal stop from a dead-end turnaround.
+3. Choose a turn using the current wall-following preference and available openings.
+4. Record completed left/right turns and check for repeated patterns.
+5. Switch the wall-following preference when a repeated pattern is detected.
+6. Adjust steering from the available wall readings and realign after turns.
 
-The terminal heuristic stops after a dead-end observation following a period without a side opening. It does not recognise a marked finish line or guarantee that an arbitrary maze has been solved.
-
-## Host-side checks
+## Automated checks
 
 ```bash
-c++ -std=c++17 -Wall -Wextra -pedantic -I tests -include tests/Arduino.h tests/test_control.cpp -o /tmp/maze-control-test
+c++ -std=c++17 -Wall -Wextra -pedantic -I tests -include tests/Arduino.h tests/test_passed_control.cpp -o /tmp/maze-control-test
 /tmp/maze-control-test
 ```
 
-These tests compile the recovered sketch against small Arduino/Servo stubs and check decision branches, motor stops, and terminal behaviour. They do not emulate IR physics, verify electrical compatibility, compile for an AVR target, or validate real-world navigation. No hardware performance benchmark is claimed.
+The host-side suite covers **6 groups of control checks**: infrared sweeps, history retention, loop recovery, steering modes, turn selection, and terminal stopping. GitHub Actions compiles and runs the suite on pushes and pull requests.
+
+The tests exercise the supplied sketch with simulated Arduino inputs. The physical maze completion is the team's hardware result, confirmed by Ailinna. See [validation and source notes](docs/VALIDATION.md) for the distinction.
+
+## Source
+
+The published sketch comes from `project_text.txt`, supplied and identified by Ailinna as the version used for the successful physical maze run. Its control logic is preserved; the import normalises line endings and trailing whitespace. This is a university team project presented in Ailinna Zhang's portfolio.
